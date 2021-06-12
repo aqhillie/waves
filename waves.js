@@ -23,7 +23,17 @@ var initialize = function() {
 		position += pointDistance;
 	}
 
-	var drawFrame = function() {
+	const drawCircle = (p, radius, strokeColor, fillColor = strokeColor) => {
+		context.beginPath();
+		context.strokeStyle = strokeColor;
+		context.fillStyle = fillColor;
+		context.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+		context.fill();
+		context.stroke();
+		context.closePath();
+	}
+
+	const drawFrame = () => {
 		context.beginPath();
 		context.fillStyle = context.strokeStyle = "#0feDb7";
 		context.clearRect(0, 0, canvas.width, canvas.height);
@@ -35,11 +45,14 @@ var initialize = function() {
 
 		context.lineTo(canvas.width, canvas.height);
 		context.lineTo(0, canvas.height);
-		// context.lineTo(0,0);
-
+	
 		context.closePath();
 		context.stroke();
 		context.fill();
+
+		for (let i = 0; i < p.length; i++) {
+			drawCircle(p[i], 5, "#00ccff");
+		}
 	}
 
 	setInterval(function() { drawFrame() }, 1000 / fps)

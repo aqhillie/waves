@@ -10,17 +10,19 @@
 				box-shadow: 1px 1px 6px #555;
 			}
 		</style>
-		<script src="waves.js"></script>
+		<script id="source-code" src="waves.js"></script>
 		<script id="source-code" type="text/javascript">
-			window.onload = () => {
+			window.onload = async () => {
 				initialize();
+
+
+				document.getElementById('source-pre').textContent = String(initialize);
 			};
 		</script>
 	</head>
 	<body>
 		<canvas id="canvas" width="800" height="450">
 		</canvas>
-		<!-- We'll do this later -->
-		<!-- <pre id="source-pre"></pre> -->
+		<pre id="source-pre"></pre>
 	</body>
 </html>

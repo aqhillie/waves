@@ -3,19 +3,19 @@ var initialize = function() {
 	var context = canvas.getContext("2d");
 
 	const fps = 60;
-	const numPoints = 5;
+	const numPoints = 8;
 	const speed = 5;
 	const waterLevel = 150;
 	// var fadeSpeed = 3;
 
 	// var t = new Array();
 	let p = new Array();
-	const pointDistance = canvas.width / numPoints;
+	const pointDistance = canvas.width / (numPoints - 1);
 	const waterBaselineY = canvas.height - waterLevel;
 
 	let position = 0;
 
-	for (i=0;i<=numPoints;i++) {
+	for (let i =0 ;i < numPoints; i++) {
 		p[i] = new Array();
 		p[i].x = position;
 		p[i].y = waterBaselineY;

@@ -62,7 +62,7 @@ var initialize = function() {
 	const averageWaterLevelAt = xPosition => {
 		let index = fractionalPointAt(xPosition);
 
-		return (index % 1 === 0) ? index : ((p[Math.floor(index)].y + p[Math.ceil(index)].y) /2);
+		return (index % 1 === 0) ? p[index].y : ((p[Math.floor(index)].y + p[Math.ceil(index)].y) /2);
 	}
 
 	const Splash = (obj, speed) => {

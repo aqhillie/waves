@@ -9,18 +9,53 @@
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="682" />
 		<style>
-			#canvas {
+			#canvas-container {
+				background-color: #0feDb7;
 				position: fixed;
-				left: 55%;
+				left: 50%;
 				transform: translateX(-50%);
-				background-color: #fff;
-				display: block;
 				margin: 0 auto;
 				margin-top: 30px;
 				box-shadow: 1px 1px 6px #555;
+				opacity: 1;
+				outline: none;
+				transition: opacity .25s ease-in-out;
+				-moz-transition: opacity .25s ease-in-out;
+				-webkit-transition: opacity .25s ease-in-out;
+			}
+
+			#canvas-container:not(:focus) {
+				opacity: .5;
+			}
+
+			#canvas-container:not(:focus) > #message {
+				color: #000;
+			}
+
+			#canvas-container:not(:focus) > #message::after {
+				content: 'Click inside to focus me.';
+			}
+
+			#canvas {
+				background-color: #fff;
+				display: block;
+			}
+
+			#message {
+				color: #555;
+				margin: 5px;
+				text-align: center;
+				transition: color .25s ease-in-out;
+				-moz-transition: color .25s ease-in-out;
+				-webkit-transition: color .25s ease-in-out;
+			}
+
+			#message::after {
+				content: 'Click outside to focus source code.';
 			}
 
 			pre {
+				outline: none;
 				tab-size: 4;
 			}
 		</style>
@@ -28,16 +63,18 @@
 		<script id="source-code" src="waves.js"></script>
 		<script type="text/javascript">
 			window.onload = async () => {
-				initialize();
-
-
+				initialize();				
 				document.getElementById('source-pre').textContent = String(initialize);
+				document.getElementById("canvas-container").focus();
 			};
 		</script>
 	</head>
 	<body>
-		<canvas id="canvas" width="800" height="450">
-		</canvas>
-		<pre id="source-pre"></pre>
+		<div id="canvas-container" tabindex="0">
+			<canvas id="canvas" width="800" height="450">
+			</canvas>	
+			<div id="message"></div>
+		</div>
+		<pre id="source-pre" tabindex="1"></pre>
 	</body>
 </html>

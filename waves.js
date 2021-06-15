@@ -2,15 +2,20 @@ var initialize = function() {
 	const canvas = document.getElementById("canvas");
 	const context = canvas.getContext("2d");
 
-	const fps = 120;
-	const numPoints = 300;
+	const fps = 60;
+	const numPoints = 80;
 	const waterLevel = 150;
 	const rockSize = 10;
 
+	const gravity = 9.81 / fps;
+
+	// Water Constants
+	const waterDensity = 3;
+
 	// Wave Constants
-	const waveTension = 0.01;
-	const waveDampening = 0.0025;
-	const waveSpread = rockSize * .01;
+	const waveTension = 0.02;
+	const waveDampening = 0.004;
+	const waveSpread = (rockSize * .02) / (300 / numPoints);
 
 	var p = new Array();
 	const pointDistance = canvas.width / (numPoints - 1);
@@ -33,25 +38,44 @@ var initialize = function() {
 		point.y += point.speed;
 	}
 
-	const drawCircle = (p, radius, strokeColor, fillColor = strokeColor) => {
+	const drawRock = (rock, strokeColor, fillColor = strokeColor) => {
 		context.beginPath();
 		context.strokeStyle = strokeColor;
 		context.fillStyle = fillColor;
-		context.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+		context.moveTo(rock.x - rock.width / 2, rock.y - rock.height / 2);
+		context.lineTo(rock.x + rock.width / 2, rock.y - rock.height / 2);
+		context.lineTo(rock.x + rock.width / 2, rock.y + rock.height / 2);
+		context.lineTo(rock.x - rock.width / 2, rock.y + rock.height / 2);
 		context.fill();
 		context.stroke();
 		context.closePath();
 	}
 
-	const Splash = (xPosition, speed) => {
-		let index = clamp(xPosition / pointDistance, 0, p.length - 1);
+	const fractionalPointAt = xPosition => {
+		return clamp(xPosition / pointDistance, 0, p.length - 1);
+	}
 
-		console.log(index);
-		console.log(Math.round(index));
+	const closestPointAt = xPosition => {
+		return Math.round(fractionalPointAt(xPosition));
+	}
 
-		p[Math.round(index)].speed = speed;
+	const averageWaterLevelAt = xPosition => {
+		let index = fractionalPointAt(xPosition);
 
-		setTimeout(() => { createNewRock() }, Math.random() * 1000);
+		return (index % 1 === 0) ? index : ((p[Math.floor(index)].y + p[Math.ceil(index)].y) /2);
+	}
+
+	const Splash = (obj, speed) => {
+		// let start = Math.floor(fractionalPointAt(obj.x - obj.width / 2));
+		// let end = Math.ceil(fractionalPointAt(obj.x + obj.width / 2));
+
+		// for (let i = start; i <= end; i++) {
+		// 	p[i].speed = -speed;
+		// }
+
+		p[closestPointAt(obj.x)].speed = speed;
+
+		// setTimeout(() => { createNewRock() }, Math.random() * 1000);
 	}
 
 	const updateWater = () => {
@@ -88,7 +112,7 @@ var initialize = function() {
 
 	}
 
-	const drawFrame = () => {
+	const drawFrame = () => {		
 		context.beginPath();
 		context.fillStyle = context.strokeStyle = "#0feDb7";
 		context.clearRect(0, 0, canvas.width, canvas.height);
@@ -109,38 +133,74 @@ var initialize = function() {
 		updateWater();
 	}
 
-	var rocks = new Array();
+	var rock = null;
 
 	const createNewRock = () => {
-		let rock = new Object();
+		rock = new Object();
 
-		rock.x = Math.random() * canvas.width;
+		rock.x = canvas.width / 2;
 		rock.y = 0;
-		rock.speed = 1;
-		rock.size = 10;
+		rock.ySpeed = 0;
+		rock.width = 20;
+		rock.height = 20;
+		rock.acceleration = 0;
 		rock.isUnderWater = false;
-
-		rocks.push(rock);
+		rock.splashed = false;
+		rock.timesUnderWater = 0;
+		rock.stopMoving = false;
 	}
 
 	const updateRocks = () => {
-		for (let i = 0; i < rocks.length; i++) {
-			let rock = rocks[i];
+		drawRock(rock, 'black');
 
-			drawCircle(rock, rock.size, 'black');
-
-			if (rock.isUnderWater) {
-				rock.y += 1;
+		if (rock.timesUnderWater > 2) {
+			if (rock.stopMoving) {
+				rock.y = waterBaselineY;
 			} else {
-				rock.y += rock.speed;
-				rock.speed *= 1.1;	
+				rock.ySpeed = (averageWaterLevelAt(rock.x) - rock.y) * .25;
+				if (Math.abs(rock.ySpeed) < .0003) {
+					rock.stopMoving = true;
+				}
 			}
+		} else {
+			let dir = rock.ySpeed >= 0 ? 1 : -1;
+			let bForce = 0;
+			let immersedArea = clamp((rock.y + rock.height / 2) - averageWaterLevelAt(rock.x), 0, rock.height);
+			let drag = 0;
 	
-			if (!rock.isUnderWater && rock.y >= waterBaselineY) {
-				rock.isUnderWater = true;
-				Splash(rock.x, rock.speed * 2);
-			}	
+			if (immersedArea > 0) {
+				drag = .7;
+			}
+
+			let fluidDensity = null;
+
+			switch(rock.timesUnderWater) {
+				case 1:
+				case 2:
+					fluidDensity = .2;
+				default:
+					fluidDensity = .3;
+			}
+
+			bForce = fluidDensity * immersedArea * -gravity;
+	
+			rock.acceleration = gravity + bForce + (drag * - dir);
+			rock.ySpeed += rock.acceleration;
 		}
+
+		rock.y += rock.ySpeed;	
+
+		if (!rock.isUnderWater && rock.y >= averageWaterLevelAt(rock.x)) {
+			rock.isUnderWater = true;
+			rock.timesUnderWater++;
+			if (!rock.splashed) {
+				Splash(rock, 100);
+				rock.splashed = true;
+			}
+		} else if (rock.y < averageWaterLevelAt(rock.x)) {
+			rock.isUnderWater = false;
+		}
+
 	}
 
 	createNewRock();
